@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Matemática no Futebol Feminino</title>
+    
+    <style>
+        /* Estilos Gerais */
+        :root {
+            --primary-color: #005f73;
+            --secondary-color: #0a9396;
+            --card-background: #ffffff;
+            --text-color: #333;
+            --light-gray: #f4f4f4;
+            --accent-color: #ee9b00;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        /* Cabeçalho */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+
+        /* Conteúdo Principal */
+        main {
+            padding: 2rem 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: 2rem;
+        }
+
+        /* Estilo dos Cards de Seção */
+        .math-section {
+            background: var(--card-background);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .math-section h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+        
+        /* Container do Gráfico para estabilidade */
+        .chart-wrapper {
+            position: relative;
+            height: 350px;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        /* Controles Interativos */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f9f9f4;
+            border-radius: 6px;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+        
+        .info-display {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* Layout Responsivo */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+            .math-section {
+                padding: 1.5rem;
+            }
+            .controls {
+                flex-direction: column;
+            }
+            .chart-wrapper {
+                height: 300px;
+            }
+        }
+
+        /* Estilos para o layout da seção de funções e a tabela */
+        .functions-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        .functions-layout .chart-wrapper {
+            flex: 3; /* O gráfico ocupa mais espaço */
+            min-width: 300px;
+        }
+
+        .functions-layout .table-wrapper {
+            flex: 1; /* A tabela ocupa menos espaço */
+            min-width: 250px;
+        }
+
+        .table-wrapper h4 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .table-wrapper table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        .table-wrapper th, .table-wrapper td {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+        }
+
+        .table-wrapper th {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .table-wrapper tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>A Matemática no Futebol Feminino - Sprint 4</h1>
+        <p>
+            André Mateus Yoshimori - RM563310<br>
+            Eduardo Francisco Mauro Gonçalves - RM561969<br>
+            Ever Callisaya Amaru - RM563971<br>
+            Gabriel Luchetta dos Santos - RM561861<br>
+            Matheus Henrique Ferreira Camargo da Silva - RM566232</p>
+    </header>
+
+    <main>
+        <section class="math-section" id="functions-section">
+            <h2>Funções: Modelando o Crescimento e o Desempenho</h2>
+            <p>Funções matemáticas podem modelar fenômenos reais, como o crescimento de seguidores de uma jogadora. O modelo exponencial é ideal para visualizar crescimentos acelerados.</p>
+            
+            <div class="functions-layout">
+                <div class="chart-wrapper">
+                    <canvas id="functionsChart"></canvas>
+                </div>
+                <div class="table-wrapper">
+                    <h4>Valores Simulados</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mês (t)</th>
+                                <th>Nº de Seguidores</th>
+                            </tr>
+                        </thead>
+                        <tbody id="functionsTableBody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label for="initialFollowers">Nº Inicial de Seguidores (N): <span class="info-display" id="initialFollowersValue">5000</span></label>
+                    <input type="range" id="initialFollowers" min="1000" max="20000" step="1000" value="5000">
+                </div>
+                <div class="control-group">
+                    <label for="growthRate">Taxa de Crescimento Mensal (r): <span class="info-display" id="growthRateValue">8</span>%</label>
+                    <input type="range" id="growthRate" min="1" max="20" step="1" value="8">
+                </div>
+            </div>
+        </section>
+
+        <section class="math-section" id="limits-section">
+            <h2>Limites: Entendendo a Saturação do Engajamento</h2>
+            <p>O conceito de limite modela a saturação do engajamento digital, que não cresce infinitamente. A função logística mostra o crescimento tendendo a um valor máximo (a assíntota).</p>
+            <div class="chart-wrapper">
+                <canvas id="limitsChart"></canvas>
+            </div>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="limitValue">Limite de Saturação (L): <span class="info-display" id="limitValueDisplay">200000</span></label>
+                    <input type="range" id="limitValue" min="50000" max="1000000" step="10000" value="200000">
+                </div>
+                <div class="control-group">
+                    <label for="steepness">Velocidade de Crescimento (k): <span class="info-display" id="steepnessValue">0.10</span></label>
+                    <input type="range" id="steepness" min="0.01" max="0.5" step="0.01" value="0.1">
+                </div>
+            </div>
+        </section>
+
+        <section class="math-section" id="derivatives-section">
+            <h2>Derivadas: A Análise da Velocidade em Campo</h2>
+            <p>A derivada da função de posição nos dá a velocidade exata. Use o slider abaixo para selecionar um instante de tempo e veja a posição e velocidade correspondentes.</p>
+            <div class="chart-wrapper">
+                <canvas id="positionChart"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="velocityChart"></canvas>
+            </div>
+             <div class="controls">
+                <div class="control-group">
+                    <label for="timeSlider">Selecione o Tempo (t): <span class="info-display" id="timeSliderValue">5.0</span> s</label>
+                    <input type="range" id="timeSlider" min="0" max="10" step="0.1" value="5.0">
+                </div>
+                 <div class="control-group">
+                     <p>Posição no tempo t: <span class="info-display" id="positionAtT">...</span> m</p>
+                     <p>Velocidade no tempo t: <span class="info-display" id="velocityAtT">...</span> m/s</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="math-section" id="integrals-section">
+            <h2>Integrais: Calculando o Desempenho Acumulado</h2>
+            <p>A integral calcula valores acumulados. Use os controles para selecionar um intervalo de tempo e veja a área sob a curva de velocidade, que representa a distância total percorrida nesse período.</p>
+            <div class="chart-wrapper">
+                <canvas id="integralsChart"></canvas>
+            </div>
+            <div class="controls">
+                 <div class="control-group">
+                    <label for="startTime">Início do Intervalo (s): <span class="info-display" id="startTimeValue">0.0</span></label>
+                    <input type="range" id="startTime" min="0" max="10" step="0.1" value="0">
+                </div>
+                <div class="control-group">
+                    <label for="endTime">Fim do Intervalo (s): <span class="info-display" id="endTimeValue">10.0</span></label>
+                    <input type="range" id="endTime" min="0" max="10" step="0.1" value="10">
+                </div>
+            </div>
+            <h3>Distância Total Percorrida: <span class="info-display" id="integralResult">...</span> metros</h3>
+        </section>
+    </main>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+
+    <script>
+    // Todo o nosso código JavaScript fica aqui dentro.
+    
+    try {
+        // Registra o plugin de anotação para ser usado por todos os gráficos.
+        Chart.register(ChartAnnotation);
+    } catch (e) {
+        console.error("Falha ao registrar o plugin ChartAnnotation:", e);
+    }
+
+    // --- SEÇÃO 1: FUNÇÕES ---
+    try {
+        const functionsCtx = document.getElementById('functionsChart').getContext('2d');
+        const initialFollowersSlider = document.getElementById('initialFollowers');
+        const growthRateSlider = document.getElementById('growthRate');
+        const initialFollowersValue = document.getElementById('initialFollowersValue');
+        const growthRateValue = document.getElementById('growthRateValue');
+        const functionsTableBody = document.getElementById('functionsTableBody');
+
+        const functionsChart = new Chart(functionsCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({ length: 25 }, (_, i) => i),
+                datasets: [{
+                    label: 'Número de Seguidores',
+                    borderColor: 'var(--secondary-color)',
+                    backgroundColor: 'rgba(10, 147, 150, 0.2)',
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { title: { display: true, text: 'Crescimento Exponencial de Seguidores' }}
+            }
+        });
+
+        function updateFunctionsSection() {
+            const N = parseFloat(initialFollowersSlider.value);
+            const r = parseFloat(growthRateSlider.value) / 100;
+
+            // Atualiza os valores dos sliders
+            initialFollowersValue.textContent = N.toLocaleString('pt-BR');
+            growthRateValue.textContent = r * 100;
+
+            // Atualiza o gráfico
+            const chartData = functionsChart.data.labels.map(t => N * Math.pow(1 + r, t));
+            functionsChart.data.datasets[0].data = chartData;
+            functionsChart.update();
+
+            // Atualiza a tabela
+            functionsTableBody.innerHTML = ''; // Limpa a tabela
+            const monthsToShow = [0, 6, 12, 18, 24];
+
+            monthsToShow.forEach(t => {
+                const followers = N * Math.pow(1 + r, t);
+                const row = document.createElement('tr');
+                
+                const cellMonth = document.createElement('td');
+                cellMonth.textContent = t;
+                
+                const cellFollowers = document.createElement('td');
+                cellFollowers.textContent = Math.round(followers).toLocaleString('pt-BR');
+                
+                row.appendChild(cellMonth);
+                row.appendChild(cellFollowers);
+                
+                functionsTableBody.appendChild(row);
+            });
+        }
+
+        initialFollowersSlider.addEventListener('input', updateFunctionsSection);
+        growthRateSlider.addEventListener('input', updateFunctionsSection);
+        updateFunctionsSection(); // Chamada inicial para popular tudo
+
+    } catch (e) { console.error("Erro na Seção Funções:", e); }
+
+    // --- SEÇÃO 2: LIMITES ---
+    try {
+        const limitsCtx = document.getElementById('limitsChart').getContext('2d');
+        const limitSlider = document.getElementById('limitValue');
+        const steepnessSlider = document.getElementById('steepness');
+        const limitValueDisplay = document.getElementById('limitValueDisplay');
+        const steepnessValue = document.getElementById('steepnessValue');
+        
+        const limitsChart = new Chart(limitsCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({ length: 101 }, (_, i) => i),
+                datasets: [{
+                    label: 'Engajamento (Função Logística)',
+                    data: [],
+                    borderColor: 'var(--accent-color)',
+                    backgroundColor: 'rgba(238, 155, 0, 0.2)',
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    title: { display: true, text: 'Saturação de Engajamento' },
+                    annotation: {
+                        annotations: {
+                            limitLine: {
+                                type: 'line',
+                                scaleID: 'y',
+                                value: 200000,
+                                borderColor: 'red',
+                                borderWidth: 2,
+                                borderDash: [6, 6],
+                                label: { content: 'Limite (L)', enabled: true, position: 'end' }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        function updateLimitsChart() {
+            const L = parseFloat(limitSlider.value);
+            const k = parseFloat(steepnessSlider.value);
+            const t0 = 50; 
+            limitValueDisplay.textContent = L.toLocaleString('pt-BR');
+            steepnessValue.textContent = k.toFixed(2);
+            const data = limitsChart.data.labels.map(t => L / (1 + Math.exp(-k * (t - t0))));
+            limitsChart.data.datasets[0].data = data;
+            limitsChart.options.plugins.annotation.annotations.limitLine.value = L;
+            limitsChart.update();
+        }
+        
+        limitSlider.addEventListener('input', updateLimitsChart);
+        steepnessSlider.addEventListener('input', updateLimitsChart);
+        updateLimitsChart();
+    } catch (e) { console.error("Erro na Seção Limites:", e); }
+
+    // --- SEÇÃO 3: DERIVADAS ---
+    try {
+        const positionCtx = document.getElementById('positionChart').getContext('2d');
+        const velocityCtx = document.getElementById('velocityChart').getContext('2d');
+        const timeSlider = document.getElementById('timeSlider');
+        const timeSliderValue = document.getElementById('timeSliderValue');
+        const positionAtT = document.getElementById('positionAtT');
+        const velocityAtT = document.getElementById('velocityAtT');
+
+        const timeLabels = Array.from({ length: 101 }, (_, i) => i / 10);
+        const positionFunction = t => -0.1 * Math.pow(t, 3) + 1.5 * Math.pow(t, 2);
+        const velocityFunction = t => -0.3 * Math.pow(t, 2) + 3 * t;
+
+        const positionData = timeLabels.map(positionFunction);
+        const velocityData = timeLabels.map(velocityFunction);
+        const maxVelocityIndex = velocityData.indexOf(Math.max(...velocityData));
+
+        const positionChart = new Chart(positionCtx, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [{ label: 'Posição s(t) (metros)', data: positionData, borderColor: 'var(--primary-color)', fill: false, pointRadius: 0 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: 'Gráfico de Posição' }
+                }
+            }
+        });
+
+        const velocityChart = new Chart(velocityCtx, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [{
+                    label: 'Velocidade v(t) (m/s)',
+                    data: velocityData,
+                    borderColor: 'var(--accent-color)',
+                    fill: false,
+                    pointBackgroundColor: velocityData.map((_, i) => i === maxVelocityIndex ? 'red' : 'transparent'),
+                    pointBorderColor: 'transparent',
+                    pointRadius: velocityData.map((_, i) => i === maxVelocityIndex ? 6 : 0),
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: 'Gráfico de Velocidade' }
+                }
+            }
+        });
+        
+        function updateDerivativesView() {
+            const currentTime = parseFloat(timeSlider.value);
+            timeSliderValue.textContent = currentTime.toFixed(1);
+            
+            positionAtT.textContent = positionFunction(currentTime).toFixed(2);
+            velocityAtT.textContent = velocityFunction(currentTime).toFixed(2);
+        }
+        
+        timeSlider.addEventListener('input', updateDerivativesView);
+        updateDerivativesView();
+    } catch (e) { console.error("Erro na Seção Derivadas:", e); }
+
+    // --- SEÇÃO 4: INTEGRAIS ---
+    try {
+        const integralsCtx = document.getElementById('integralsChart').getContext('2d');
+        const startTimeSlider = document.getElementById('startTime');
+        const endTimeSlider = document.getElementById('endTime');
+        const startTimeValue = document.getElementById('startTimeValue');
+        const endTimeValue = document.getElementById('endTimeValue');
+        const integralResultDisplay = document.getElementById('integralResult');
+        const velocityData = Array.from({ length: 101 }, (_, i) => i / 10).map(t => -0.3 * Math.pow(t, 2) + 3 * t);
+        const timeLabels = Array.from({ length: 101 }, (_, i) => i / 10);
+        
+        const integralsChart = new Chart(integralsCtx, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [
+                {
+                    label: 'Velocidade v(t) (m/s)',
+                    data: velocityData,
+                    borderColor: 'var(--accent-color)',
+                    borderWidth: 2,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Área da Integral',
+                    backgroundColor: 'rgba(10, 147, 150, 0.3)',
+                    fill: { target: 'origin' },
+                    pointRadius: 0,
+                    borderColor: 'transparent',
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Distância Percorrida (Área sob a Curva)' }} }
+        });
+
+        function updateIntegralsChart() {
+            let startT = parseFloat(startTimeSlider.value);
+            let endT = parseFloat(endTimeSlider.value);
+            if (startT > endT) { [startT, endT] = [endT, startT]; }
+
+            startTimeValue.textContent = startT.toFixed(1);
+            endTimeValue.textContent = endT.toFixed(1);
+
+            const shadedData = timeLabels.map((t, i) => (t >= startT && t <= endT) ? velocityData[i] : null);
+            integralsChart.data.datasets[1].data = shadedData;
+            integralsChart.update();
+            
+            const integralFunction = t => -0.1 * Math.pow(t, 3) + 1.5 * Math.pow(t, 2);
+            const result = integralFunction(endT) - integralFunction(startT);
+            integralResultDisplay.textContent = result.toFixed(2);
+        }
+
+        startTimeSlider.addEventListener('input', updateIntegralsChart);
+        endTimeSlider.addEventListener('input', updateIntegralsChart);
+        updateIntegralsChart();
+    } catch (e) { console.error("Erro na Seção Integrais:", e); }
+    </script>
+
+</body>
+</html>
