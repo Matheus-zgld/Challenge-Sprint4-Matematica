@@ -315,17 +315,14 @@
             const N = parseFloat(initialFollowersSlider.value);
             const r = parseFloat(growthRateSlider.value) / 100;
 
-            // Atualiza os valores dos sliders
             initialFollowersValue.textContent = N.toLocaleString('pt-BR');
             growthRateValue.textContent = r * 100;
 
-            // Atualiza o gráfico
             const chartData = functionsChart.data.labels.map(t => N * Math.pow(1 + r, t));
             functionsChart.data.datasets[0].data = chartData;
             functionsChart.update();
 
-            // Atualiza a tabela
-            functionsTableBody.innerHTML = ''; // Limpa a tabela
+            functionsTableBody.innerHTML = ''; 
             const monthsToShow = [0, 6, 12, 18, 24];
 
             monthsToShow.forEach(t => {
@@ -347,7 +344,7 @@
 
         initialFollowersSlider.addEventListener('input', updateFunctionsSection);
         growthRateSlider.addEventListener('input', updateFunctionsSection);
-        updateFunctionsSection(); // Chamada inicial para popular tudo
+        updateFunctionsSection();
 
     } catch (e) { console.error("Erro na Seção Funções:", e); }
 
@@ -419,25 +416,47 @@
         const positionAtT = document.getElementById('positionAtT');
         const velocityAtT = document.getElementById('velocityAtT');
 
-        const timeLabels = Array.from({ length: 101 }, (_, i) => i / 10);
         const positionFunction = t => -0.1 * Math.pow(t, 3) + 1.5 * Math.pow(t, 2);
         const velocityFunction = t => -0.3 * Math.pow(t, 2) + 3 * t;
 
-        const positionData = timeLabels.map(positionFunction);
-        const velocityData = timeLabels.map(velocityFunction);
-        const maxVelocityIndex = velocityData.indexOf(Math.max(...velocityData));
+        // **CORREÇÃO**: Gerar dados como objetos {x, y} para escala linear
+        const timePoints = Array.from({ length: 101 }, (_, i) => i / 10);
+        const positionData = timePoints.map(t => ({ x: t, y: positionFunction(t) }));
+        const velocityData = timePoints.map(t => ({ x: t, y: velocityFunction(t) }));
+        
+        const velocityValues = velocityData.map(p => p.y);
+        const maxVelocityIndex = velocityValues.indexOf(Math.max(...velocityValues));
 
         const positionChart = new Chart(positionCtx, {
             type: 'line',
             data: {
-                labels: timeLabels,
-                datasets: [{ label: 'Posição s(t) (metros)', data: positionData, borderColor: 'var(--primary-color)', fill: false, pointRadius: 0 }]
+                // Não usamos mais 'labels' para uma escala linear
+                datasets: [{ 
+                    label: 'Posição s(t) (metros)', 
+                    data: positionData, 
+                    borderColor: 'var(--primary-color)', 
+                    fill: false, 
+                    pointRadius: 0 
+                }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                // **CORREÇÃO**: Definir o eixo X como 'linear'
+                scales: {
+                    x: {
+                        type: 'linear',
+                        min: 0,
+                        max: 10
+                    }
+                },
                 plugins: {
-                    title: { display: true, text: 'Gráfico de Posição' }
+                    title: { display: true, text: 'Gráfico de Posição' },
+                    annotation: {
+                        annotations: {
+                            timeLine: { type: 'line', scaleID: 'x', value: 5.0, borderColor: 'red', borderWidth: 2 }
+                        }
+                    }
                 }
             }
         });
@@ -445,22 +464,34 @@
         const velocityChart = new Chart(velocityCtx, {
             type: 'line',
             data: {
-                labels: timeLabels,
                 datasets: [{
                     label: 'Velocidade v(t) (m/s)',
                     data: velocityData,
                     borderColor: 'var(--accent-color)',
                     fill: false,
-                    pointBackgroundColor: velocityData.map((_, i) => i === maxVelocityIndex ? 'red' : 'transparent'),
+                    pointBackgroundColor: velocityValues.map((_, i) => i === maxVelocityIndex ? 'red' : 'transparent'),
                     pointBorderColor: 'transparent',
-                    pointRadius: velocityData.map((_, i) => i === maxVelocityIndex ? 6 : 0),
+                    pointRadius: velocityValues.map((_, i) => i === maxVelocityIndex ? 6 : 0),
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                // **CORREÇÃO**: Definir o eixo X como 'linear'
+                scales: {
+                    x: {
+                        type: 'linear',
+                        min: 0,
+                        max: 10
+                    }
+                },
                 plugins: {
-                    title: { display: true, text: 'Gráfico de Velocidade' }
+                    title: { display: true, text: 'Gráfico de Velocidade' },
+                    annotation: {
+                        annotations: {
+                            timeLine: { type: 'line', scaleID: 'x', value: 5.0, borderColor: 'red', borderWidth: 2 }
+                        }
+                    }
                 }
             }
         });
@@ -468,6 +499,12 @@
         function updateDerivativesView() {
             const currentTime = parseFloat(timeSlider.value);
             timeSliderValue.textContent = currentTime.toFixed(1);
+            
+            positionChart.options.plugins.annotation.annotations.timeLine.value = currentTime;
+            velocityChart.options.plugins.annotation.annotations.timeLine.value = currentTime;
+            
+            positionChart.update('none');
+            velocityChart.update('none');
             
             positionAtT.textContent = positionFunction(currentTime).toFixed(2);
             velocityAtT.textContent = velocityFunction(currentTime).toFixed(2);
@@ -485,17 +522,18 @@
         const startTimeValue = document.getElementById('startTimeValue');
         const endTimeValue = document.getElementById('endTimeValue');
         const integralResultDisplay = document.getElementById('integralResult');
-        const velocityData = Array.from({ length: 101 }, (_, i) => i / 10).map(t => -0.3 * Math.pow(t, 2) + 3 * t);
-        const timeLabels = Array.from({ length: 101 }, (_, i) => i / 10);
         
+        const timeLabels = Array.from({ length: 101 }, (_, i) => i / 10);
+        const velocityDataForIntegral = timeLabels.map(t => -0.3 * Math.pow(t, 2) + 3 * t);
+
         const integralsChart = new Chart(integralsCtx, {
             type: 'line',
             data: {
-                labels: timeLabels,
+                labels: timeLabels, // Aqui a escala de categoria funciona bem
                 datasets: [
                 {
                     label: 'Velocidade v(t) (m/s)',
-                    data: velocityData,
+                    data: velocityDataForIntegral,
                     borderColor: 'var(--accent-color)',
                     borderWidth: 2,
                     pointRadius: 0
@@ -519,7 +557,7 @@
             startTimeValue.textContent = startT.toFixed(1);
             endTimeValue.textContent = endT.toFixed(1);
 
-            const shadedData = timeLabels.map((t, i) => (t >= startT && t <= endT) ? velocityData[i] : null);
+            const shadedData = timeLabels.map((t, i) => (t >= startT && t <= endT) ? velocityDataForIntegral[i] : null);
             integralsChart.data.datasets[1].data = shadedData;
             integralsChart.update();
             
